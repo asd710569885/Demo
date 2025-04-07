@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>翻译</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.0.0/crypto-js.js"></script>
+  </head>
+  <body>
+    <form class="contactForm" accept-charset="UTF-8">
+      <input type="text" class="input" value="" />
+      <button class="btn">提交</button>
+    </form>
+
+    <div class="text"></div>
+  </body>
+
+  <script>
+    var appKey = "71d06e12efd72907";
+    var key = "2obzOpeAGVplTKAE8ux9oHr150RGworh"; //注意：暴露appSecret，有被盗用造成损失的风险
+    var salt = new Date().getTime();
+
+    $(".contactForm").submit(function (e) {
+      e.preventDefault(); // 阻止默认表单提交
+      // 获取表单数据
+      var formData = {
+        name: $(".input").val(),
+      };
+      // ------------------------ 
+
+      var curtime = Math.round(new Date().getTime() / 1000);
+      var query = formData.name;
+      // 多个query可以用\n连接  如 query='apple\norange\nbanana\npear'
+      var from = "zh-CHS";
+      var to = "en";
+      var str1 = appKey + truncate(query) + salt + curtime + key;
+      var vocabId = "您的用户词表ID";
+
+      var sign = CryptoJS.SHA256(str1).toString(CryptoJS.enc.Hex);
+
+      $.ajax({
+        url: "https://openapi.youdao.com/api",
+        type: "post",
+        dataType: "jsonp",
+        data: {
+          q: query,
+          appKey: appKey,
+          salt: salt,
+          from: from,
+          to: to,
+          sign: sign,
+          signType: "v3",
+          curtime: curtime,
+          vocabId: vocabId,
+        },
+        success: function (data) {
+          console.log(data);
+
+          $(".text").text(data.translation);
+        },
+      });
+    });
+
+    function truncate(q) {
+      var len = q.length;
+      if (len <= 20) return q;
+      return q.substring(0, 10) + len + q.substring(len - 10, len);
+    }
+  </script>
+</html>
